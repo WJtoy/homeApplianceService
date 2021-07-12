@@ -1,0 +1,54 @@
+package com.kkl.kklplus.golden.modules.api.service;
+
+
+import com.kkl.kklplus.golden.modules.api.entity.golden.GoldenSysLog;
+import com.kkl.kklplus.golden.modules.api.mapper.GoldenSysLogMapper;
+import com.kkl.kklplus.golden.modules.api.utils.QuarterUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.Date;
+
+@Service
+@Slf4j
+@Transactional(propagation = Propagation.NOT_SUPPORTED)
+public class GoldenSysLogService {
+
+    private static final int DICT_LOCK_EXPIRED  = 60;
+
+    @Resource
+    private GoldenSysLogMapper goldensysLogMapper;
+
+
+    /**
+     * 添加异常日志
+     */
+    public void insert(Integer type,Long createId, String params,String exception, String title,String uri,String method){
+        GoldenSysLog goldenSysLog = new GoldenSysLog();
+        goldenSysLog.setType(type);
+        goldenSysLog.setException(exception);
+        goldenSysLog.setTitle(title);
+        goldenSysLog.setParams(params);
+        goldenSysLog.setCreateBy(createId);
+
+        goldenSysLog.setQuarter(QuarterUtils.getQuarter(new Date(goldenSysLog.getCreateDate())));
+        try {
+            goldensysLogMapper.insert(goldenSysLog);
+        }catch (Exception e){
+            log.error("报错信息记录失败",e.getMessage());
+        }
+    }
+
+    public void insert(Long createId, String params,String exception, String title,String uri,String method){
+        GoldenSysLog goldenSysLog = new GoldenSysLog();
+
+        try {
+            goldensysLogMapper.insert(goldenSysLog);
+        }catch (Exception e){
+            log.error("报错信息记录失败",e.getMessage());
+        }
+    }
+}

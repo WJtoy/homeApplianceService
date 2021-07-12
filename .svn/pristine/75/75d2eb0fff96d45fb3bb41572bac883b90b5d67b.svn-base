@@ -1,0 +1,66 @@
+package com.kkl.kklplus.golden.modules.api.mq.sender;
+
+import com.google.gson.Gson;
+import com.googlecode.protobuf.format.JsonFormat;
+import com.kkl.kklplus.golden.modules.api.entity.golden.GoldenSysLog;
+import com.kkl.kklplus.golden.modules.api.mapper.GoldenSysLogMapper;
+import com.kkl.kklplus.golden.modules.api.mq.body.MQGoldenOrderCenterMessage;
+import com.kkl.kklplus.golden.modules.api.mq.contans.MQConstant;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.support.CorrelationData;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.retry.RetryCallback;
+import org.springframework.retry.support.RetryTemplate;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
+public class GoldenCenterMessageSender implements RabbitTemplate.ConfirmCallback {
+
+        private RabbitTemplate rabbitTemplate;
+
+        private RetryTemplate retryTemplate;
+
+
+        @Autowired
+        public GoldenCenterMessageSender(RabbitTemplate kklRabbitTemplate, RetryTemplate kklRabbitRetryTemplate) {
+                this.rabbitTemplate = kklRabbitTemplate;
+                this.rabbitTemplate.setConfirmCallback(this);
+                this.retryTemplate = kklRabbitRetryTemplate;
+        }
+
+        /**
+         * 正常发送消息
+         *
+         */
+        public void send(MQGoldenOrderCenterMessage.GoldenOrderCenterMessage message) {
+                        try{
+                                retryTemplate.execute((RetryCallback<Object, Exception>) context -> {
+                                context.setAttribute(MQConstant.MQ_TEST_EXCHANGE, message);
+                                rabbitTemplate.convertAndSend(
+                                        MQConstant.MQ_TEST_EXCHANGE,
+                                        MQConstant.MQ_TEST_EXCHANGE,
+                                        message.toByteArray(),
+                                        new CorrelationData());
+                                return null;
+                        }, context -> {
+                                Object msgObj = context.getAttribute(MQConstant.MQ_TEST_EXCHANGE);
+                                MQGoldenOrderCenterMessage.GoldenOrderCenterMessage msg =
+                                MQGoldenOrderCenterMessage.GoldenOrderCenterMessage.parseFrom((byte[])msgObj);
+                                Throwable throwable = context.getLastThrowable();
+                                String msgJson = new JsonFormat().printToString(msg);
+                                return null;
+                        });
+                }catch (Exception e) {
+                        e.printStackTrace();
+                        log.error(e.getLocalizedMessage());
+                }
+        }
+
+
+        @Override
+        public void confirm(CorrelationData correlationData, boolean b, String s) {
+
+        }
+}

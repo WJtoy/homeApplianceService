@@ -1,0 +1,34 @@
+package com.kkl.kklplus.golden.entity.param;
+
+import com.kkl.kklplus.entity.common.MSPage;
+import com.kkl.kklplus.golden.entity.GoldenSettlements;
+import lombok.Data;
+
+@Data
+public class SettlementsSearchModel extends MSPage<GoldenSettlements> {
+
+    private Integer paymentType;
+
+    private Integer bank;
+
+    private Long servicePointId;
+
+    private Integer invoiceFlag;
+
+    private Integer discountFlag;
+
+    private Long beginCreateDate;
+
+    private Long endCreateDate;
+
+    private String withdrawNo;
+
+    private Long beginPayDate;
+
+    private Long endPayDate;
+
+    private Integer status;
+
+    private Integer subStatus;
+
+}

@@ -1,0 +1,16 @@
+package com.kkl.kklplus.golden.mapper;
+
+import com.kkl.kklplus.golden.entity.GoldenProcessLog;
+import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
+
+@Mapper
+public interface GoldenProcesslogMapper {
+
+
+    List<GoldenProcessLog> select();
+
+    Long insert(GoldenProcessLog goldenProcessLog);
+
+}

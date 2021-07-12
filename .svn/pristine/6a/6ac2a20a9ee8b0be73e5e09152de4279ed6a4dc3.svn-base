@@ -1,0 +1,84 @@
+package com.kkl.kklplus.golden.modules.api.http.utils;
+
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import com.kkl.kklplus.golden.modules.api.http.request.CommonParam;
+import com.kkl.kklplus.golden.modules.api.http.command.OperationCommand;
+import com.kkl.kklplus.golden.modules.api.http.config.GoldenProperties;
+import com.kkl.kklplus.golden.modules.api.http.response.ResponseBody;
+import com.kkl.kklplus.golden.modules.api.utils.AesUtil;
+import com.kkl.kklplus.golden.modules.api.utils.SpringContextHolder;
+import com.kkl.kklplus.golden.modules.api.utils.EncodesUtils;
+import okhttp3.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+
+public class OkHttpUtils {
+
+    private static final MediaType CONTENT_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
+    private static OkHttpClient okHttpClient = SpringContextHolder.getBean(OkHttpClient.class);
+    private static GoldenProperties  goldenProperties = SpringContextHolder.getBean(GoldenProperties .class);
+    private static Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+
+    public static <T> ResponseBody<T> postSyncGenericNew(OperationCommand command, Class<T> dataClass, CommonParam commonParam) {
+        ResponseBody<T> responseBody = null;
+
+        if (command.getOpCode()!= null && command != null ) {
+            String data = gson.toJson(command.getRequestParam());
+            String aes = AesUtil.encrypt(data, goldenProperties.getGoldenDataConfig().getAppSecret());    //加密
+
+            System.out.println(aes+"---------------------------------------->");
+            String url = goldenProperties.getGoldenDataConfig().getRequestMainUrl().concat(command.getOpCode().apiUrl);
+            String reqbodyJson = gson.toJson(aes);
+            RequestBody requestBody = RequestBody.create(CONTENT_TYPE_JSON, reqbodyJson);
+            Map<String, String> headers = new HashMap<>();
+            headers.put("appkey",goldenProperties.getGoldenDataConfig().getAppKey());
+            headers.put("sign_type",goldenProperties.getGoldenDataConfig().getSignType());
+            headers.put("version",String.valueOf(goldenProperties.getGoldenDataConfig().getVersion()));
+            headers.put("request_id",commonParam.getRequestId());
+            headers.put("timestamp",String.valueOf(commonParam.getTime()));
+            headers.put("signature", EncodesUtils.HMACSHA256(
+                            goldenProperties.getGoldenDataConfig().getAppKey()
+                                    +commonParam.getTime()
+                                    +goldenProperties.getGoldenDataConfig().getAppSecret()
+                                    ,goldenProperties.getGoldenDataConfig().getAppSecret()));
+            if (!commonParam.getCallBackUrl().isEmpty()) {
+                headers.put("callback_url", EncodesUtils.encryptBASE64(commonParam.getCallBackUrl()).replace("\r\n",""));
+            }
+            Request.Builder requestBuilder = new Request.Builder().url(url);
+            headers.forEach((k, v) -> requestBuilder.addHeader(k, v));
+            Request request = requestBuilder.post(requestBody).build();
+
+            Call call = okHttpClient.newCall(request);
+            try {
+                Response response = call.execute();
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        String responseBodyJson = response.body().string();
+                        try {
+                            responseBody = gson.fromJson(responseBodyJson, new TypeToken<ResponseBody>(){}.getType());
+
+                            //发送消息队列
+                        } catch (Exception e) {
+                            return responseBody;
+                        }
+                    } else {
+                        responseBody = new ResponseBody<>(ResponseBody.ErrorCode.HTTP_RESPONSE_BODY_ERROR);
+                    }
+                } else {
+                    responseBody = new ResponseBody<>(ResponseBody.ErrorCode.HTTP_STATUS_CODE_ERROR);
+                }
+            } catch (Exception e) {
+                return new ResponseBody<>(ResponseBody.ErrorCode.REQUEST_INVOCATION_FAILURE, e);
+            }
+        } else {
+            responseBody = new ResponseBody<>(ResponseBody.ErrorCode.REQUEST_PARAMETER_FORMAT_ERROR);
+        }
+        return responseBody;
+    }
+
+}

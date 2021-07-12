@@ -1,0 +1,32 @@
+package com.kkl.kklplus.golden.utils.common;
+
+import com.kkl.kklplus.golden.entity.param.DataParam;
+import com.kkl.kklplus.golden.utils.GsonUtils;
+import lombok.extern.slf4j.Slf4j;
+
+
+@Slf4j
+public class DemoUtils {
+
+
+        public static String toDataJson(String str){
+            DataParam dataParam = new DataParam();
+            dataParam.setData(str);
+            String data =null;
+                    try{
+                    data = GsonUtils.getInstance().toGson(dataParam);
+                    }catch (Exception e){
+                       log.error("json-->{}"+e.getMessage());
+                    }
+            return data;
+        }
+
+    public static void main(String[] args) {
+        String s = DemoUtils.toDataJson("dsadasd");
+        System.out.println(s);
+    }
+
+
+
+
+}

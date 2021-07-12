@@ -1,0 +1,73 @@
+package com.kkl.kklplus.golden.modules.api.mq.receiver;
+
+import com.kkl.kklplus.golden.modules.api.entity.GoldenSettlement;
+import com.kkl.kklplus.golden.modules.api.mq.body.MQGoldenOrderCenterMessage;
+import com.kkl.kklplus.golden.modules.api.mq.contans.MQConstant;
+import com.kkl.kklplus.golden.modules.api.service.GoldenSettlementService;
+import com.rabbitmq.client.Channel;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+
+@Slf4j
+@Component
+public class GoldenCenterMessageReceiver {
+
+    @Autowired
+    private GoldenSettlementService goldenSettlementService;
+
+
+    @RabbitListener(queues = MQConstant.MQ_TEST_EXCHANGE)
+    public void onMessage(Message message, Channel channel) throws Exception {
+
+        try {
+            MQGoldenOrderCenterMessage.GoldenOrderCenterMessage goldenOrderCenterMessage =
+                    MQGoldenOrderCenterMessage.GoldenOrderCenterMessage.parseFrom(message.getBody());
+            log.error("{}", goldenOrderCenterMessage.toString());
+
+            GoldenSettlement goldenSettlement = new GoldenSettlement();
+            goldenSettlement.setWithdrawId(goldenOrderCenterMessage.getWithdrawId());
+            goldenSettlement.setWithdrawNo(goldenOrderCenterMessage.getWithdrawNo());
+            goldenSettlement.setBank(goldenOrderCenterMessage.getBank());
+            goldenSettlement.setBankName(goldenOrderCenterMessage.getBankName());
+            goldenSettlement.setBankOwner(goldenOrderCenterMessage.getBankOwner());
+            goldenSettlement.setBankOwnerIdno(goldenOrderCenterMessage.getBankOwnerIdno());
+            goldenSettlement.setBankOwnerPhone(goldenOrderCenterMessage.getBankOwnerPhone());
+            goldenSettlement.setPayBy(goldenOrderCenterMessage.getPayBy());
+            goldenSettlement.setBankNo(goldenOrderCenterMessage.getBankNo());
+            goldenSettlement.setPayForYear(goldenOrderCenterMessage.getPayForYear());
+            goldenSettlement.setCertificateType(goldenOrderCenterMessage.getCertificateType());
+            goldenSettlement.setPaymentAccount(goldenOrderCenterMessage.getPaymentAccount());
+            goldenSettlement.setQuarter(goldenOrderCenterMessage.getQuarter());
+            goldenSettlement.setDiscountFlag(goldenOrderCenterMessage.getDiscountFlag());
+            goldenSettlement.setInvoiceFlag(goldenOrderCenterMessage.getInvoiceFlag());
+            goldenSettlement.setPaymentType(goldenOrderCenterMessage.getPaymentType());
+            goldenSettlement.setPayAmount(new BigDecimal(goldenOrderCenterMessage.getPayAmount()));
+            goldenSettlement.setServicePointId(goldenOrderCenterMessage.getServicePointId());
+            goldenSettlement.setAlipayAccountid(goldenOrderCenterMessage.getAlipayAccountId());
+            goldenSettlement.setWxAppid(goldenOrderCenterMessage.getWxAppid());
+            goldenSettlement.setWxOpenId(goldenOrderCenterMessage.getWxOpenId());
+            goldenSettlement.setApplyAmount(new BigDecimal(goldenOrderCenterMessage.getApplyAmount()));
+            goldenSettlement.setPaymentWay(goldenOrderCenterMessage.getPaymentWay());
+
+          //  BeanUtils.copyProperties(goldenOrderCenterMessage,goldenSettlement);
+
+
+
+
+
+            goldenSettlementService.checkSettlement(goldenSettlement);
+
+
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }finally {
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+        }
+    }
+}

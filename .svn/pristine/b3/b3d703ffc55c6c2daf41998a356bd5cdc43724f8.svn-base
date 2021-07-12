@@ -1,0 +1,27 @@
+package com.kkl.kklplus.golden.modules.api.entity.common;
+
+import lombok.Data;
+
+@Data
+public class GoldenHeaders {
+
+    private String appKey;
+
+    private String appSecret;
+
+    private String signType;
+
+    private String version;
+
+    private Long timestamp;
+
+    //
+    private String url;
+
+    //回调地址
+    private String callbackUrl;
+
+    //项目编号
+    private String projectCode;
+
+}

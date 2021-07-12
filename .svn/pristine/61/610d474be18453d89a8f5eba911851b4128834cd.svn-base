@@ -1,0 +1,13 @@
+package com.kkl.kklplus.golden.entity.param;
+
+import com.kkl.kklplus.entity.common.MSPage;
+import com.kkl.kklplus.golden.entity.GoldenSettlements;
+import lombok.Data;
+
+@Data
+public class StatusParam {
+
+    private Integer status; //处理中列表[主状态:处理中20、挂起25]  付款成功列表[主状态:付款成功40]
+
+    private MSPage<GoldenSettlements> page;
+}

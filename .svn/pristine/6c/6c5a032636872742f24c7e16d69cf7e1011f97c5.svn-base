@@ -1,0 +1,11 @@
+package com.kkl.kklplus.golden.modules.api.mq.contans;
+
+public class MQConstant {
+    public static final String MQ_TEST_EXCHANGE = "GOLDEN:MQ:TEST:EXCHANGE";
+
+    public MQConstant() {
+
+
+    }
+
+}

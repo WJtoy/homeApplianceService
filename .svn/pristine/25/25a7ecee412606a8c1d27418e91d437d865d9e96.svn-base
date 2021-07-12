@@ -1,0 +1,38 @@
+package com.kkl.kklplus.golden.mq.config;
+
+
+import com.kkl.kklplus.entity.golden.common.MQConstant;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Queue;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+
+/**
+ * mq发送成功消息
+ * @author chenxj
+ * @date 2020/05/29
+ */
+@Configuration
+public class MQGoldenSettlementsDelayConfig {
+
+    @Bean
+    public Queue goldenSettlementsExpressArrivalQueue() {
+        return new Queue(MQConstant.MQ_GOLDEN_SETTLEMENTS_DELAY, true);
+    }
+
+    @Bean
+    DirectExchange goldenSettlementsExpressArrivalExchange() {
+        return new DirectExchange(MQConstant.MQ_GOLDEN_SETTLEMENTS_DELAY);
+    }
+
+    @Bean
+    Binding bindingGoldenSettlementsExpressArrivalMessage(Queue goldenSettlementsExpressArrivalQueue, DirectExchange goldenSettlementsExpressArrivalExchange) {
+        return BindingBuilder.bind(goldenSettlementsExpressArrivalQueue)
+                .to(goldenSettlementsExpressArrivalExchange)
+                .with(MQConstant.MQ_GOLDEN_SETTLEMENTS_DELAY);
+    }
+
+}

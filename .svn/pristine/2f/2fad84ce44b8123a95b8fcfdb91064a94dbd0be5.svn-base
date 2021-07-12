@@ -1,0 +1,10 @@
+package com.kkl.kklplus.golden.modules.api.http.request;
+
+import com.kkl.kklplus.golden.modules.api.http.request.RequestParam;
+import lombok.Data;
+
+@Data
+public class RefundBalance extends RequestParam {
+
+
+}

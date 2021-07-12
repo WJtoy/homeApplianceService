@@ -1,0 +1,68 @@
+package com.kkl.kklplus.golden.mq.sender;
+
+import com.googlecode.protobuf.format.JsonFormat;
+import com.kkl.kklplus.golden.mapper.GoldenSysLogMapper;
+import com.kkl.kklplus.golden.mq.body.MQGoldenSettlementMessage;
+import com.kkl.kklplus.golden.mq.contans.MQConstant;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.support.CorrelationData;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.retry.RetryCallback;
+import org.springframework.retry.support.RetryTemplate;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
+public class GoldenSettlementMessageSender implements RabbitTemplate.ConfirmCallback {
+
+    @Autowired
+    private GoldenSysLogMapper goldenSysLogMapper;
+
+    private RabbitTemplate rabbitTemplate;
+
+    private RetryTemplate retryTemplate;
+
+
+    @Autowired
+    public GoldenSettlementMessageSender(RabbitTemplate kklRabbitTemplate, RetryTemplate kklRabbitRetryTemplate) {
+        this.rabbitTemplate = kklRabbitTemplate;
+        //this.rabbitTemplate.setConfirmCallback(this);
+        this.retryTemplate = kklRabbitRetryTemplate;
+    }
+
+    /**
+     * 正常发送消息
+     *
+     */
+    public void send(MQGoldenSettlementMessage.GoldenSettlementMessage message) {
+       try{
+            retryTemplate.execute((RetryCallback<Object, Exception>) context -> {
+                context.setAttribute(MQConstant.MQ_TEST_EXCHANGE, message);
+                rabbitTemplate.convertAndSend(
+                        MQConstant.MQ_TEST_EXCHANGE,
+                        MQConstant.MQ_TEST_EXCHANGE,
+                        message.toByteArray(),
+                        new CorrelationData());
+                return null;
+            }, context -> {
+                Object msgObj = context.getAttribute(MQConstant.MQ_TEST_EXCHANGE);
+                MQGoldenSettlementMessage.GoldenSettlementMessage msg =
+                        MQGoldenSettlementMessage.GoldenSettlementMessage.parseFrom((byte[])msgObj);
+                Throwable throwable = context.getLastThrowable();
+                String msgJson = new JsonFormat().printToString(msg);
+
+                return null;
+            });
+        }catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getLocalizedMessage());
+        }
+    }
+
+
+    @Override
+    public void confirm(CorrelationData correlationData, boolean b, String s) {
+
+    }
+}

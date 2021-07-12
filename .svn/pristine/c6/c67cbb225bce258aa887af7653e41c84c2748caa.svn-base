@@ -1,0 +1,88 @@
+package com.kkl.kklplus.golden.mq.receiver;
+
+
+import com.kkl.kklplus.golden.entity.GoldenSettlements;
+import com.kkl.kklplus.golden.entity.GoldenSysLog;
+
+import com.kkl.kklplus.golden.mq.body.MQGoldenSettlementsCoreMessage;
+import com.kkl.kklplus.golden.mq.contans.MQConstant;
+import com.kkl.kklplus.golden.service.GoldenSettlementsService;
+import com.kkl.kklplus.golden.service.GoldenSysLogService;
+import com.kkl.kklplus.golden.utils.GsonUtils;
+import com.kkl.kklplus.golden.utils.QuarterUtils;
+import com.rabbitmq.client.Channel;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.util.Date;
+
+@Slf4j
+@Component
+public class GoldenSettlementsCoreMessageReceiver {
+
+    @Autowired
+    private GoldenSettlementsService goldenSettlementsService;
+
+    @Autowired
+    private GoldenSysLogService goldenSysLogService;
+
+
+    @RabbitListener(queues = MQConstant.MQ_TEST_EXCHANGE)
+    public void onMessage(Message message, Channel channel) throws Exception {
+
+        try {
+            MQGoldenSettlementsCoreMessage.GoldenSettlementsCoreMessage goldenOrderCenterMessage =
+                    MQGoldenSettlementsCoreMessage.GoldenSettlementsCoreMessage.parseFrom(message.getBody());
+            log.error("{}", goldenOrderCenterMessage.toString());
+
+            GoldenSettlements goldenSettlements = new GoldenSettlements();
+            goldenSettlements.setWithdrawId(goldenOrderCenterMessage.getWithdrawId());
+            goldenSettlements.setWithdrawNo(goldenOrderCenterMessage.getWithdrawNo());
+            goldenSettlements.setBank(goldenOrderCenterMessage.getBank());
+            goldenSettlements.setBankName(goldenOrderCenterMessage.getBankName());
+            goldenSettlements.setBankOwner(goldenOrderCenterMessage.getBankOwner());
+            goldenSettlements.setBankOwnerIdno(goldenOrderCenterMessage.getBankOwnerIdno());
+            goldenSettlements.setBankOwnerPhone(goldenOrderCenterMessage.getBankOwnerPhone());
+            goldenSettlements.setPayBy(goldenOrderCenterMessage.getPayBy());
+            goldenSettlements.setBankNo(goldenOrderCenterMessage.getBankNo());
+            goldenSettlements.setPayForYear(goldenOrderCenterMessage.getPayForYear());
+            goldenSettlements.setPayForMonth(goldenOrderCenterMessage.getPayForMonth());
+            goldenSettlements.setCertificateType(goldenOrderCenterMessage.getCertificateType());
+            goldenSettlements.setPaymentAccount(goldenOrderCenterMessage.getPaymentAccount());
+            goldenSettlements.setQuarter(goldenOrderCenterMessage.getQuarter());
+            goldenSettlements.setDiscountFlag(goldenOrderCenterMessage.getDiscountFlag());
+            goldenSettlements.setInvoiceFlag(goldenOrderCenterMessage.getInvoiceFlag());
+            goldenSettlements.setPaymentType(goldenOrderCenterMessage.getPaymentType());
+            goldenSettlements.setPayAmount(new BigDecimal(goldenOrderCenterMessage.getPayAmount()));
+            goldenSettlements.setServicePointId(goldenOrderCenterMessage.getServicePointId());
+            goldenSettlements.setAlipayAccountid(goldenOrderCenterMessage.getAlipayAccountId());
+            goldenSettlements.setWxAppid(goldenOrderCenterMessage.getWxAppid());
+            goldenSettlements.setWxOpenId(goldenOrderCenterMessage.getWxOpenId());
+            goldenSettlements.setApplyAmount(new BigDecimal(goldenOrderCenterMessage.getApplyAmount()));
+            goldenSettlements.setPaymentWay(goldenOrderCenterMessage.getPaymentWay());
+          //  BeanUtils.copyProperties(goldenOrderCenterMessage,goldenSettlement);
+
+            goldenSettlementsService.checkSettlement(goldenSettlements);
+
+        }catch (Exception e) {
+            String strMessage = GsonUtils.getInstance().toGson(message);
+            log.error("接收退款信息{}"+strMessage);
+            GoldenSysLog goldenSysLog = new GoldenSysLog();
+            goldenSysLog.setParams(strMessage);
+            goldenSysLog.setQuarter(QuarterUtils.getQuarter(new Date()));
+            goldenSysLog.setRequestUri("balance/CreateForBatch");
+            goldenSysLog.setCreateDate(System.currentTimeMillis());
+            goldenSysLog.setMethod("POST");
+            goldenSysLog.setException(e.getMessage());
+            goldenSysLog.setType(1);
+            goldenSysLog.setCreateBy(1L);
+            goldenSysLogService.insertModel(goldenSysLog);
+        }finally {
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+        }
+    }
+}

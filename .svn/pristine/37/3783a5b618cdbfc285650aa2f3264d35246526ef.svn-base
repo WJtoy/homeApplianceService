@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kkl.kklplus.golden.modules.api.mapper.GoldenSettlementMapper">
+
+
+        <select id="select" resultType="com.kkl.kklplus.golden.modules.api.entity.golden.GoldenSettlement">
+            select
+            id,
+            withdraw_id,
+            withdraw_no,
+            service_point_id,
+            service_status,
+            invoice_flag,
+            discount_flag,
+            payment_type,
+            status,
+            sub_status,
+            bank,
+            bank_no,
+            bank_owner,
+            bank_owner_idno,
+            bank_owner_phone,
+            apply_amount,
+            pay_amount,
+            pay_by,
+            pay_date,
+            pay_for_year,
+            pay_for_month,
+            certificate_type,
+            bank_name,
+            payment_way,
+            payment_account,
+            alipay_accountid,
+            wx_open_id,
+            wx_appid,
+            settlement_code,
+            verification_error_code,
+            fail_reason,
+            hangup_msg,
+            refund_merchant_amount,
+            refund_service_amount,
+            change_code,
+            change_merchant_amount,
+            change_service_amount,
+            remarks,
+            process_time,
+            process_comment,
+            create_by,
+            create_date,
+            update_by,
+            update_date,
+            quarter
+            from golden_settlements
+            <where>
+                <if test=" id != null">
+                    AND id = #{id}
+                </if>
+                <if test=" withdrawId != null">
+                    AND withdraw_id = #{withdrawId}
+                </if>
+                <if test=" withdrawNo != null">
+                    AND withdraw_no = #{withdrawNo}
+                </if>
+                <if test=" quarter != null">
+                    AND quarter = #{quarter}
+                </if>
+            </where>
+
+
+        </select>
+
+
+
+    <insert id="insert" parameterType="com.kkl.kklplus.golden.modules.api.entity.golden.GoldenSettlement">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() AS ID
+        </selectKey>
+        INSERT into golden_settlements (
+            withdraw_id,
+            withdraw_no,
+            service_point_id,
+            service_status,
+            invoice_flag,
+            discount_flag,
+            payment_type,
+            status,
+            sub_status,
+            bank,
+            bank_no,
+            bank_owner,
+            bank_owner_idno,
+            bank_owner_phone,
+            apply_amount,
+            pay_amount,
+            pay_by,
+            pay_date,
+            pay_for_year,
+            pay_for_month,
+            certificate_type,
+            bank_name,
+            payment_way,
+            payment_account,
+            alipay_accountid,
+            wx_open_id,
+            wx_appid,
+            settlement_code,
+            verification_error_code,
+            fail_reason,
+            hangup_msg,
+            refund_merchant_amount,
+            refund_service_amount,
+            change_code,
+            change_merchant_amount,
+            change_service_amount,
+            remarks,
+            process_time,
+            process_comment,
+            create_by,
+            create_date,
+            update_by,
+            update_date,
+            quarter
+        )values (
+        #{withdrawId},
+        #{withdrawNo},
+        #{servicePointId},
+        #{serviceStatus},
+        #{invoiceFlag},
+        #{discountFlag},
+        #{paymentType},
+        #{status},
+        #{subStatus},
+        #{bank},
+        #{bankNo},
+        #{bankOwner},
+        #{bankOwnerIdno},
+        #{bankOwnerPhone},
+        #{applyAmount},
+        #{payAmount},
+        #{payBy},
+        #{payDate},
+        #{payForYear},
+        #{payForMonth},
+        #{certificateType},
+        #{bankName},
+        #{paymentWay},
+        #{paymentAccount},
+        #{alipayAccountid},
+        #{wxOpenId},
+        #{wxAppid},
+        #{settlementCode},
+        #{verificationErrorCode},
+        #{failReason},
+        #{hangupMsg},
+        #{refundMerchantAmount},
+        #{refundServiceAmount},
+        #{changeCode},
+        #{changeMerchantAmount},
+        #{changeServiceAmount},
+        #{remarks},
+        #{processTime},
+        #{processComment},
+        #{createBy},
+        #{createDate},
+        #{updateBy},
+        #{updateDate},
+        #{quarter}
+        )
+    </insert>
+
+
+    <update id="update">
+        update
+        golden_settlements
+        set
+        <if test="status != null">
+        status = #{status},
+        </if>
+        <if test="subStatus != null">
+        sub_status = #{subStatus},
+        </if>
+        <if test="settlementCode != null">
+        settlement_code = #{settlementCode},
+        </if>
+        <if test="processComment != null">
+        process_comment = #{processComment},
+        </if>
+        <if test="refundMerchantAmount != null">
+        refund_merchant_amount = #{refundMerchantAmount},
+        </if>
+        <if test="refundServiceAmount != null">
+        refund_service_amount = #{refundServiceAmount},
+        </if>
+        <if test="changeCode != null">
+        change_code = #{changeCode},
+        </if>
+        <if test="changeMerchantAmount != null">
+        change_merchant_amount = #{changeMerchantAmount},
+        </if>
+        <if test="changeServiceAmount !=null ">
+        change_service_amount = #{changeServiceAmount},
+        </if>
+        <if test="processTime != null">
+        process_time = #{processTime},
+        </if>
+        <if test="updateDate != null">
+        update_date = #{updateDate},
+        </if>
+        <if test="remarks != null">
+        remarks = #{remarks}
+        </if>
+        <where>
+			id= #{id}
+        </where>
+    </update>
+
+
+    <sql id="set_column">
+        <if test="id != null ">
+            id = #{id,jdbcType=BIGINT},
+        </if>
+
+    </sql>
+</mapper>

@@ -1,0 +1,31 @@
+package com.kkl.kklplus.golden.entity;
+
+import lombok.Data;
+
+@Data
+public class GoldenSysLog {
+
+    private Long id;
+
+    private Integer type;
+
+    private Long createBy;
+
+    private Long createDate;
+
+    private String userAgent;
+
+    private String requestUri;
+
+    private String method;
+
+    private String params;
+
+    private String exception;
+
+    private String title;
+
+    private String quarter;
+
+
+}

@@ -1,0 +1,22 @@
+package com.kkl.kklplus.golden.mq.receiver;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
+public class GoldenSettlementMessageReceiver {
+    /*@RabbitListener(queues = MQConstant.MQ_TEST_EXCHANGE)
+    public void onMessage(Message message, Channel channel) throws Exception {
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+        try {
+            MQGoldenSettlementMessage.GoldenSettlementMessage goldenSettlementMessage =
+                    MQGoldenSettlementMessage.GoldenSettlementMessage.parseFrom(message.getBody());
+            log.error("{}", goldenSettlementMessage.toString());
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }*/
+}

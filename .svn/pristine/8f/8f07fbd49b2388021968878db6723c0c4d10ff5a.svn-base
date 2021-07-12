@@ -1,0 +1,18 @@
+package com.kkl.kklplus.golden.entity.param;
+
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+import javax.validation.constraints.NotNull;
+
+@Data
+public class PageParam {
+
+    @ApiModelProperty(value = "页码",dataType = "Integer")
+    @NotNull
+    private Integer pageNumber;
+
+    @ApiModelProperty(value = "每页数量",dataType = "Integer")
+    @NotNull
+    private Integer pageSize;
+}

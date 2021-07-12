@@ -1,0 +1,14 @@
+package com.kkl.kklplus.golden.modules.api.entity.params;
+
+import lombok.Data;
+
+@Data
+public class CommonParam {
+
+    private String requestId;
+
+    private Long time;
+
+    private String callBackUrl;
+
+}

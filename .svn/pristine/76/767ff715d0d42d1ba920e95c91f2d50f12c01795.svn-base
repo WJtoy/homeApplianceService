@@ -1,0 +1,19 @@
+package com.kkl.kklplus.golden.modules.api.mapper;
+
+import com.kkl.kklplus.golden.modules.api.entity.golden.GoldenCallbackLog;
+import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
+
+@Mapper
+public interface GoldenCallbackLogMapper {
+
+    List<GoldenCallbackLog> select();
+
+    Long insert(GoldenCallbackLog goldenCallbackLog);
+
+    Long update(GoldenCallbackLog goldenCallbackLog);
+
+    GoldenCallbackLog selectOne(GoldenCallbackLog goldenCallbackLog);
+
+}

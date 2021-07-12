@@ -1,0 +1,4 @@
+package com.kkl.kklplus.golden.entity.param;
+
+public class StatusParam {
+}

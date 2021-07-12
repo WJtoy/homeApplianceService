@@ -1,0 +1,62 @@
+package com.kkl.kklplus.golden.controller;
+
+import com.kkl.kklplus.common.exception.MSErrorCode;
+import com.kkl.kklplus.common.response.MSResponse;
+import com.kkl.kklplus.golden.entity.GoldenSettlements;
+import com.kkl.kklplus.golden.service.GoldenSettlementsService;
+import com.kkl.kklplus.golden.service.GoldenSysLogService;
+import com.kkl.kklplus.golden.utils.GsonUtils;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@Api(tags = "结算单操作接口")
+@Slf4j
+@RestController
+@RequestMapping("/settlements/")
+public class SettlementsController {
+
+    @Autowired
+    private GoldenSettlementsService settlementsService;
+
+    @Autowired
+    private GoldenSysLogService sysLogService;
+
+
+    @ApiOperation("关闭退款")
+    @GetMapping("closeRefund/{id}/{updateById}")
+    public MSResponse<Integer> closeRefund(@PathVariable("id")Long id,@PathVariable("updateById")Long updateById) {
+        try {
+            Integer count = settlementsService.closeRefund(id, updateById, System.currentTimeMillis());
+            return new MSResponse(MSErrorCode.SUCCESS,count);
+        }catch (Exception e){
+            log.error("关闭退款异常:{}",id,e);
+            sysLogService.insert(updateById,id.toString(), e.getMessage(),
+                    "关闭退款异常","settlements/closeRefund", "GET");
+            return new MSResponse(new MSErrorCode(1000, StringUtils.left(e.getMessage(),200)),0);
+        }
+    }
+
+    @ApiOperation("批量查询付款单对应的结算单的状态及其异常原因")
+    @PostMapping("batchSearchSettlementsByWithdrawIds")
+    public MSResponse<Map<Long, GoldenSettlements>> batchSearchSettlementsByWithdrawIds(@RequestBody List<Long> withdrawIds) {
+        try {
+            Map<Long,GoldenSettlements> settlementsMap =
+                    settlementsService.batchSearchSettlementsByWithdrawIds(withdrawIds);
+            return new MSResponse(MSErrorCode.SUCCESS,settlementsMap);
+        }catch (Exception e){
+            String gson = GsonUtils.getInstance().toGson(withdrawIds);
+            log.error("批量查询付款单对应的结算单异常:{}",gson,e);
+            sysLogService.insert(1L,gson, e.getMessage(),
+                    "批量查询付款单对应的结算单异常","settlements/batchSearchSettlementsByWithdrawIds", "POST");
+            return new MSResponse(new MSErrorCode(1000, StringUtils.left(e.getMessage(),200)));
+        }
+    }
+
+}

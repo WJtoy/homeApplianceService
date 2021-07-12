@@ -1,0 +1,20 @@
+package com.kkl.kklplus.golden.modules.api.config;
+
+public class Constant {
+
+    public static final String APP_KEY = "063a424500b0421591df9ea29eab3893";
+    public static final String REQUEST_ID = "123";
+    public static final String APP_SECRET = "27da720d54464d3394b4a3ea4792fb3a";//密钥
+    public static final String AES_SECRET = "27da720d54464d3394b4a3ea4792fb3a";  //aes密钥
+    public static final String AES_IV = "ff465fdecc764337";  //aes加密偏移量
+    public static final String SIGN_TYPE = "sha256";    //签名类型
+    public static final String VERSION = "2.0";
+    public static final String TEST_URL = "https://api-js.wetax.com.cn/api/balance/signagreement";
+    public static final String GOLDEN_URL = "https://api-js-ets.wetax.com.cn";
+    public static final String GOLDEN_URL_TEST = "https://api-js.wetax.com.cn/";
+    public static final String BACK_URL = "http://dev:dev.123@119.23.43.232:8800/eureka";
+    public static final String BACK_URL_TEST = "http://lcoalhost:8080";
+
+    public static final String callbackUrl = "http://lcoalhost:8899";
+
+}

@@ -1,0 +1,51 @@
+package com.kkl.kklplus.golden.modules.api.config;
+
+import com.kkl.kklplus.golden.modules.api.utils.StringUtil;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+
+import java.util.HashMap;
+import java.util.Map;
+
+
+public class HeadersShare {
+
+    public static Long time = System.currentTimeMillis() / 1000;
+
+    public static HttpHeaders getHeaders(){
+        //header参数
+        HttpHeaders headers = new HttpHeaders();
+        Long signTime = System.currentTimeMillis();
+        /*String token = "asdfaf2322";
+        headers.add("authorization", token);*/
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("appkey",Constant.APP_KEY);
+        headers.add("timestamp",String.valueOf(signTime));
+        headers.add("sign_type",Constant.SIGN_TYPE);
+        headers.add("request_id","123");
+        headers.add("signature", StringUtil.HMACSHA256(
+                Constant.APP_KEY+signTime+Constant.APP_SECRET,Constant.APP_SECRET));
+        headers.add("version",Constant.VERSION);
+
+        return headers;
+    }
+
+
+
+    public static Map<String,String> getHeadersOKHttps(String url){
+
+        Map<String , String> headers = new HashMap<>();
+        headers.put("appkey",Constant.APP_KEY);
+        headers.put("timestamp",String.valueOf(time));
+        headers.put("sign_type",Constant.SIGN_TYPE);
+        headers.put("request_id","123");
+        headers.put("signature", StringUtil.HMACSHA256(
+                Constant.APP_KEY+time+Constant.APP_SECRET,Constant.APP_SECRET));
+        headers.put("version",Constant.VERSION);
+        if (url != null && url != "")
+        headers.put("callback_url",StringUtil.encryptBASE64(url));
+        return headers;
+    }
+
+
+}

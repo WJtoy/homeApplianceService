@@ -1,0 +1,15 @@
+package com.kkl.kklplus.golden.entity.param;
+
+
+import com.kkl.kklplus.entity.common.MSPage;
+import com.kkl.kklplus.golden.entity.GoldenSettlements;
+import lombok.Data;
+
+@Data
+public class SubStatusParam  extends MSPage<GoldenSettlements> {
+
+    private Integer subStatus;
+
+   private MSPage<GoldenSettlements> page;
+
+}

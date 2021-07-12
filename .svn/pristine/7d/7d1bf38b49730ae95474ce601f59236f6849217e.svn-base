@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kkl.kklplus.golden.modules.api.mapper.GoldenProcesslogMapper">
+
+
+        <select id="select" resultType="com.kkl.kklplus.golden.modules.api.entity.golden.GoldenProcessLog">
+            select
+            id
+            ,settlement_id
+            ,withdraw_no
+            ,interface_name
+            ,info_json
+            ,result_json
+            ,process_flag
+            ,process_time
+            ,process_comment
+            ,create_by
+            ,create_date
+            ,update_by
+            ,update_date
+            ,quarter
+            from golden_processlog
+            <where>
+
+
+            </where>
+        </select>
+
+
+
+    <insert id="insert" parameterType="com.kkl.kklplus.golden.modules.api.entity.golden.GoldenProcessLog">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() AS ID
+        </selectKey>
+        INSERT into golden_processlog (
+        id
+        ,settlement_id
+        ,withdraw_no
+        ,interface_name
+        ,info_json
+        ,result_json
+        ,process_flag
+        ,process_time
+        ,process_comment
+        ,create_by
+        ,create_date
+        ,update_by
+        ,update_date
+        ,quarter
+        )values (
+        #{id}
+        ,#{settlementId}
+        ,#{withdrawNo}
+        ,#{interfaceName}
+        ,#{infoJson}
+        ,#{resultJson}
+        ,#{processFlag}
+        ,#{processTime}
+        ,#{processComment}
+        ,#{createBy}
+        ,#{createDate}
+        ,#{updateBy}
+        ,#{updateDate}
+        ,#{quarter}
+        )
+    </insert>
+
+
+
+
+
+    <sql id="set_column">
+        <if test="id != null ">
+            id = #{id,jdbcType=BIGINT},
+        </if>
+
+    </sql>
+</mapper>

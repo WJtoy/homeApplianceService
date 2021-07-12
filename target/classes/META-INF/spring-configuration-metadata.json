@@ -1,0 +1,34 @@
+{
+  "hints": [],
+  "groups": [
+    {
+      "sourceType": "com.kkl.kklplus.golden.http.config.GoldenProperties",
+      "name": "golden",
+      "type": "com.kkl.kklplus.golden.http.config.GoldenProperties"
+    },
+    {
+      "sourceType": "com.kkl.kklplus.golden.http.config.GoldenProperties",
+      "name": "golden.golden-data-config",
+      "sourceMethod": "getGoldenDataConfig()",
+      "type": "com.kkl.kklplus.golden.http.config.GoldenProperties$GoldenDataConfig"
+    },
+    {
+      "sourceType": "com.kkl.kklplus.golden.http.config.GoldenProperties",
+      "name": "golden.okhttp",
+      "sourceMethod": "getOkhttp()",
+      "type": "com.kkl.kklplus.golden.http.config.GoldenProperties$OkHttpProperties"
+    }
+  ],
+  "properties": [
+    {
+      "sourceType": "com.kkl.kklplus.golden.http.config.GoldenProperties",
+      "name": "golden.aes-iv",
+      "type": "java.lang.String"
+    },
+    {
+      "sourceType": "com.kkl.kklplus.golden.http.config.GoldenProperties",
+      "name": "golden.callback-url",
+      "type": "java.lang.String"
+    }
+  ]
+}

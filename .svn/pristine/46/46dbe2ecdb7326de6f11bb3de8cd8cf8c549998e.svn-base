@@ -1,0 +1,257 @@
+package com.kkl.kklplus.golden.service;
+
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.kkl.kklplus.golden.commonEnum.ProcessFlagEnum;
+import com.kkl.kklplus.golden.commonEnum.SettlementEnum;
+import com.kkl.kklplus.golden.commonEnum.SubSettlementEnum;
+import com.kkl.kklplus.golden.entity.GoldenCallbackLog;
+import com.kkl.kklplus.golden.entity.GoldenProcessLog;
+import com.kkl.kklplus.golden.entity.GoldenSettlements;
+import com.kkl.kklplus.golden.entity.GoldenSysLog;
+import com.kkl.kklplus.golden.entity.callback.PaymentParam;
+import com.kkl.kklplus.golden.entity.callback.RequestCallbackParam;
+import com.kkl.kklplus.golden.http.command.OperationCommand;
+import com.kkl.kklplus.golden.http.config.GoldenProperties;
+import com.kkl.kklplus.golden.http.request.CommonParam;
+import com.kkl.kklplus.golden.http.request.CreateForBatchParam;
+import com.kkl.kklplus.golden.http.response.ResponseBody;
+import com.kkl.kklplus.golden.http.utils.OkHttpUtils;
+import com.kkl.kklplus.golden.mapper.GoldenProcesslogMapper;
+import com.kkl.kklplus.golden.mapper.GoldenSettlementsMapper;
+import com.kkl.kklplus.golden.mapper.GoldenSysLogMapper;
+import com.kkl.kklplus.golden.mapper.GoldenCallbackLogMapper;
+import com.kkl.kklplus.golden.mq.body.MQGoldenSettlementMessage;
+import com.kkl.kklplus.golden.mq.sender.GoldenSettlementMessageSender;
+import com.kkl.kklplus.golden.utils.AesUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+
+@Slf4j
+@Service
+public class GoldenSettlementsService {
+
+    @Autowired
+    private GoldenSettlementsMapper goldenSettlementsMapper;
+
+    @Autowired
+    private GoldenProcesslogMapper goldenProcesslogMapper;
+
+    @Autowired
+    private GoldenSysLogMapper goldenSysLogMapper;
+
+    @Autowired
+    private GoldenCallbackLogMapper goldenCallbackLogMapper;
+
+    @Autowired
+    private GoldenSettlementMessageSender goldenSettlementMessageSender;
+
+    @Autowired
+    private GoldenProperties goldenProperties;
+
+
+    private static Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+
+
+    public void checkSettlement(GoldenSettlements goldenSettlements) {
+        try {
+            goldenSettlements.setCreateBy(1L);
+            goldenSettlements.setCreateDate(System.currentTimeMillis());
+            goldenSettlements.setServiceStatus(1);
+            goldenSettlements.setStatus(SettlementEnum.NEW_REQUEST.getValue());
+            goldenSettlements.setSubStatus(SubSettlementEnum.PROCESS.getValue());
+            goldenSettlements.setPayDate(System.currentTimeMillis());
+            Long goldenSettlementId = goldenSettlementsMapper.insert(goldenSettlements);
+            CreateForBatchParam createForBatchParam = new CreateForBatchParam();
+            createForBatchParam.setName(goldenSettlements.getBankOwner());
+            createForBatchParam.setSettleAmount(goldenSettlements.getPayAmount());
+            createForBatchParam.setPaymentWay(goldenSettlements.getPaymentWay());
+            createForBatchParam.setOrderRandomCode(String.valueOf(goldenSettlements.getWithdrawId()));
+            createForBatchParam.setPhoneNum(goldenSettlements.getBankOwnerPhone());
+            createForBatchParam.setBankName(goldenSettlements.getBankName());
+            createForBatchParam.setCertificateType(goldenSettlements.getCertificateType());
+            createForBatchParam.setCertificateNum(goldenSettlements.getBankOwnerIdno());
+            createForBatchParam.setBankcardNum(goldenSettlements.getBankNo());
+            String jsonString = gson.toJson(createForBatchParam);
+
+            GoldenProcessLog goldenProcesslog = new GoldenProcessLog();
+            goldenProcesslog.setInfoJson(jsonString);
+            goldenProcesslog.setInterfaceName("/createForBatch");
+            goldenProcesslog.setProcessFlag(0);
+            goldenProcesslog.setProcessTime(1);
+            goldenProcesslog.setCreateBy(1L);
+            goldenProcesslog.setCreateDate(System.currentTimeMillis());
+            goldenProcesslog.setUpdateBy(1L);
+            goldenProcesslog.setWithdrawNo(goldenSettlements.getWithdrawNo());
+            goldenProcesslog.setSettlementId(goldenSettlementId);
+            goldenProcesslog.setUpdateDate(System.currentTimeMillis());
+            goldenProcesslog.setQuarter(goldenSettlements.getQuarter());
+            goldenProcesslog.setProcessFlag(1);
+            Long processLogId = goldenProcesslogMapper.insert(goldenProcesslog);
+            CommonParam commonParam = new CommonParam();
+            commonParam.setRequestId(String.valueOf(processLogId));
+            commonParam.setTime(goldenProcesslog.getCreateDate());
+            commonParam.setCallBackUrl(goldenProperties.getCallbackUrl() + "/api/callback/payment");
+            OperationCommand command = OperationCommand.newInstance(OperationCommand.OperationCode.CREATEFORBATCH, createForBatchParam);
+            ResponseBody<ResponseBody> resBody = OkHttpUtils.postSyncGenericNew(command, ResponseBody.class, commonParam);
+            if (resBody.getCode() == 0) {
+                GoldenSettlements goldenSettlements2 = new GoldenSettlements();
+                goldenSettlements2.setId(goldenSettlementId);
+                goldenSettlements2.setStatus(SettlementEnum.PROCESS.getValue());
+                goldenSettlements2.setSubStatus(SubSettlementEnum.PROCESS.getValue());
+                goldenSettlements2.setUpdateDate(System.currentTimeMillis());
+                goldenSettlementsMapper.update(goldenSettlements2);
+
+            } else {
+                GoldenSettlements goldenSettlements2 = new GoldenSettlements();
+                goldenSettlements2.setId(goldenSettlementId);
+                goldenSettlements2.setProcessComment(resBody.getMsg());
+                goldenSettlements2.setRemarks("请求失败");
+                goldenSettlements2.setUpdateDate(System.currentTimeMillis());
+                goldenSettlements2.setSubStatus(SubSettlementEnum.REQ_EXCEPTION.getValue());
+                goldenSettlementsMapper.update(goldenSettlements2);
+            }
+
+        } catch (Exception e) {
+            if (StringUtils.contains(e.getMessage(), "Duplicate")) {
+                GoldenSysLog goldenSysLog = new GoldenSysLog();
+                goldenSysLog.setCreateBy(1L);
+                goldenSysLog.setCreateDate(System.currentTimeMillis());
+                goldenSysLog.setMethod("");
+                goldenSysLog.setRequestUri("");
+                goldenSysLog.setException(e.getMessage());
+                goldenSysLog.setTitle("数据库中数据重复定义，请确认");
+                goldenSysLog.setQuarter(goldenSettlements.getQuarter());
+                goldenSysLogMapper.insert(goldenSysLog);
+            }
+            GoldenSysLog goldenSysLog = new GoldenSysLog();
+            goldenSysLog.setCreateBy(1L);
+            goldenSysLog.setCreateDate(System.currentTimeMillis());
+            goldenSysLog.setMethod("");
+            goldenSysLog.setRequestUri("");
+            goldenSysLog.setException(e.getMessage());
+            goldenSysLog.setTitle("插入异常");
+            goldenSysLog.setType(1);
+            goldenSysLog.setQuarter(goldenSettlements.getQuarter());
+            goldenSysLogMapper.insert(goldenSysLog);
+            log.info(e.getMessage());
+        }
+    }
+
+
+    /**
+     * 高登回调后的
+     * @param requestCallbackParam
+     * @param status
+     * @param notice
+     * @return
+     */
+    public String goldenSettlement(RequestCallbackParam requestCallbackParam , Integer status, String notice) {
+        String aesStr = AesUtil.decrypt(requestCallbackParam.getData(), "");
+        if (aesStr.isEmpty()) {  //解密失败
+            GoldenSysLog goldenSysLog = new GoldenSysLog();
+            goldenSysLog.setCreateBy(1L);
+            goldenSysLog.setTitle("解密失败");
+            goldenSysLog.setType(1);
+            goldenSysLog.setCreateDate(System.currentTimeMillis());
+            goldenSysLog.setException(requestCallbackParam.getData());
+            goldenSysLogMapper.insert(goldenSysLog);
+            return "success";
+        }
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
+        Gson gson = gsonBuilder.create();
+        PaymentParam paymentParam = gson.fromJson(aesStr, PaymentParam.class);
+        if (paymentParam != null) {
+            if (paymentParam.getOrderRandomCode() != null) {
+                GoldenSettlements goldenSettlements = new GoldenSettlements();
+                goldenSettlements.setWithdrawId(Long.valueOf(paymentParam.getOrderRandomCode()));
+                List<GoldenSettlements> goldenSettlementsList = goldenSettlementsMapper.select(goldenSettlements);
+                if (goldenSettlementsList.size() == 1) {
+                    GoldenSettlements goldenSettlements1 = new GoldenSettlements();
+                    goldenSettlements1.setId(goldenSettlementsList.get(0).getId());
+
+                    goldenSettlements1.setStatus(status);
+
+                    goldenSettlements1.setUpdateDate(System.currentTimeMillis());
+                    goldenSettlementsMapper.update(goldenSettlements1);
+                    //发送mq
+                    MQGoldenSettlementMessage.GoldenSettlementMessage goldenSettlementMessage =
+                            MQGoldenSettlementMessage.GoldenSettlementMessage.newBuilder()
+                                    .setRemarks(notice)
+                                    .setStatus(status)
+                                    .setId(goldenSettlements.getId())
+                                    .setQuarter(goldenSettlementsList.get(0).getQuarter())
+                                    .build();
+                    try {
+                        goldenSettlementMessageSender.send(goldenSettlementMessage);
+                        GoldenCallbackLog goldenCallbackLog = new GoldenCallbackLog();
+                        goldenCallbackLog.setSettlementId(goldenSettlementsList.get(0).getId());
+                        GoldenCallbackLog goldenCallbackLog1 = goldenCallbackLogMapper.selectOne(goldenCallbackLog);
+                        if (goldenCallbackLog1 != null) {
+                            goldenCallbackLog.setProcessFlag(ProcessFlagEnum.SUCCESS.getValue());
+                            goldenCallbackLog.setUpdateDate(System.currentTimeMillis());
+                            goldenCallbackLog.setUpdateBy(1L);
+                            goldenCallbackLogMapper.update(goldenCallbackLog);
+                        }
+
+                    } catch (Exception e) {
+                        GoldenCallbackLog goldenCallbackLog = new GoldenCallbackLog();
+                        goldenCallbackLog.setSettlementId(goldenSettlementsList.get(0).getId());
+                        GoldenCallbackLog goldenCallbackLog1 = goldenCallbackLogMapper.selectOne(goldenCallbackLog);
+                        if (goldenCallbackLog1 != null) {
+                            goldenCallbackLog.setProcessFlag(ProcessFlagEnum.FAIL.getValue());
+                            goldenCallbackLog.setUpdateDate(System.currentTimeMillis());
+                            goldenCallbackLog.setUpdateBy(1L);
+                            goldenCallbackLogMapper.update(goldenCallbackLog);
+                        }
+                        GoldenSysLog goldenSysLog = new GoldenSysLog();
+                        goldenSysLog.setTitle("回调成功后发送消息队列通知失败");
+                        goldenSysLog.setCreateDate(System.currentTimeMillis());
+                        goldenSysLog.setQuarter(goldenSettlementsList.get(0).getQuarter());
+                        goldenSysLog.setCreateBy(1L);
+                        goldenSysLog.setException(e.getMessage());
+                        goldenSysLog.setType(1);
+                        goldenSysLogMapper.insert(goldenSysLog);
+                    }
+                    return null;
+                }else{
+                    GoldenSysLog goldenSysLog = new GoldenSysLog();
+                    goldenSysLog.setCreateBy(1L);
+                    goldenSysLog.setCreateDate(System.currentTimeMillis());
+                    goldenSysLog.setTitle("商户订单号不存在");
+                    goldenSysLog.setType(1);
+                    goldenSysLog.setException("商户订单不存在");
+                    goldenSysLogMapper.insert(goldenSysLog);
+                }
+            }
+        }
+        return "success";
+    }
+
+    /**
+     * 手动关闭退款
+     * @param id
+     * @param updateById
+     * @param updateDt
+     * @return
+     */
+    public Integer closeRefund(Long id, Long updateById, long updateDt) {
+        return goldenSettlementsMapper.closeRefund(id,updateById,updateDt);
+    }
+
+    /**
+     * 批量查询付款单对应的结算单的状态及其异常原因
+     * @param withdrawIds
+     * @return
+     */
+    public Map<Long, GoldenSettlements> batchSearchSettlementsByWithdrawIds(List<Long> withdrawIds) {
+        return goldenSettlementsMapper.batchSearchSettlementsByWithdrawIds(withdrawIds);
+    }
+}

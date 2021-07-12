@@ -1,0 +1,101 @@
+package com.kkl.kklplus.golden.modules.api.entity.golden;
+
+import lombok.Data;
+
+import java.math.BigDecimal;
+
+@Data
+public class GoldenSettlement {
+
+    private Long id;
+
+    private Long withdrawId;
+
+    private String withdrawNo;
+
+    private Long servicePointId;
+
+    private Integer serviceStatus;
+
+    private Integer invoiceFlag;
+
+    private Integer discountFlag;
+
+    private Integer paymentType;
+
+    private Integer status;  //10:新申请，20：处理中，25：挂起，30：付款失败，40：付款成功  默认：10，请求结算成功更新为20
+
+    private Integer subStatus;  //子状态:请求中15  请求异常18  处理中20  待退款30、退款中35、退款失败38、退款成功39
+
+    private Integer bank;
+
+    private String bankNo;
+
+    private String bankOwner;
+
+    private String bankOwnerIdno;
+
+    private String bankOwnerPhone;
+
+    private BigDecimal applyAmount;
+
+    private BigDecimal payAmount;
+
+    private Long payBy;
+
+    private Long payDate;
+
+    private Integer payForYear;
+
+    private Integer payForMonth;
+
+    private Integer certificateType;
+
+    private String bankName;
+
+    private Integer paymentWay;
+
+    private String paymentAccount;
+
+    private String alipayAccountid;
+
+    private String wxOpenId;
+
+    private String wxAppid;
+
+    private String settlementCode;
+
+    private Integer verificationErrorCode;
+
+    private String failReason;
+
+    private String hangupMsg;
+
+    private BigDecimal refundMerchantAmount;
+
+    private BigDecimal refundServiceAmount;
+
+    private String changeCode;
+
+    private BigDecimal changeMerchantAmount;
+
+    private BigDecimal changeServiceAmount;
+
+    private String remarks;
+
+    private Integer processTime;
+
+    private String processComment;
+
+    private Long createBy;
+
+    private Long createDate;
+
+    private Long updateBy;
+
+    private Long updateDate;
+
+    private String quarter;
+
+
+}

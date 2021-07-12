@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kkl.kklplus.golden.mapper.GoldenSysLogMapper">
+
+
+        <select id="select" resultType="com.kkl.kklplus.golden.entity.GoldenSysLog">
+            select
+            id,
+            type,
+            create_by,
+            create_date,
+            user_agent,
+            request_uri,
+            method,
+            params,
+            exception,
+            quarter,
+            title
+            from golden_sys_log
+        </select>
+
+
+
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        INSERT into golden_sys_log (
+        type,
+        create_by,
+        create_date,
+        user_agent,
+        request_uri,
+        method,
+        params,
+        exception,
+        quarter,
+        title
+        )values (
+        #{type},
+        #{createBy},
+        #{createDate},
+        #{userAgent},
+        #{requestUri},
+        #{method},
+        #{params},
+        #{exception},
+        #{quarter},
+        #{title}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.kkl.kklplus.golden.entity.GoldenSysLog">
+        UPDATE golden_sys_log
+        <set>
+            <include refid="set_column" />
+        </set>
+        WHERE	ID = #{id,jdbcType=BIGINT}
+    </update>
+
+
+
+
+    <sql id="set_column">
+        <if test="id != null ">
+            id = #{id,jdbcType=BIGINT},
+        </if>
+        <if test="type != null ">
+            type = #{type,jdbcType=INTEGER},
+        </if>
+        <if test="createBy != null ">
+            create_by = #{createBy,jdbcType=BIGINT},
+        </if>
+        <if test="createDate != null">
+            create_date = #{createDate,jdbcType=BIGINT},
+        </if>
+        <if test="userAgent != null">
+            user_agent = #{userAgent,jdbcType=VARCHAR},
+        </if>
+        <if test="requestUri != null">
+            request_uri = #{requestUri,jdbcType=VARCHAR},
+        </if>
+        <if test="method != null">
+            method = #{method,jdbcType=VARCHAR},
+        </if>
+        <if test="params != nll">
+            patams = #{method,jdbcType=VARCHAR},
+        </if>
+        <if test="exception != null">
+            exception = #{exception,jdbcType=VARCHAR},
+        </if>
+        <if test="quarter != null">
+            quarter = #{quarter,jdbcType=VARCHAR},
+        </if>
+        <if test="title != null">
+            title = #{tilte,jdbcType=VARCHAR},
+        </if>
+    </sql>
+</mapper>

@@ -1,0 +1,88 @@
+package com.kkl.kklplus.golden;
+
+import com.kkl.kklplus.golden.http.request.CommonParam;
+import com.kkl.kklplus.golden.http.request.CreateForBatchParam;
+import com.kkl.kklplus.golden.http.response.ResponseBody;
+import com.kkl.kklplus.golden.mq.body.MQGoldenOrderCenterMessage;
+import com.kkl.kklplus.golden.mq.sender.GoldenCenterMessageSender;
+import com.kkl.kklplus.golden.utils.QuarterUtils;
+import com.kkl.kklplus.golden.http.command.OperationCommand;
+import com.kkl.kklplus.golden.http.utils.OkHttpUtils;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import java.util.Date;
+
+@RunWith(SpringRunner.class)
+@SpringBootTest
+@ActiveProfiles("dev")
+public class GoldenApplicationTests {
+
+    @Autowired
+    GoldenCenterMessageSender goldenCenterMessageSender;
+
+
+    @Test
+    public void test4(){
+        String date = "\"[{\"order_random_code\":\"3ff73660-12fd-4605-a851-2afa728f0f27\",\"name\":\"玩具\",\"certificate_type\":1,\"certificate_num\":\"430422199705289855\",\"phone_num\":\"18888888888\",\"bank_name\":\"招商银行\",\"bankcard_num\":\"23232323232\",\"settle_amount\":1.0,\"payment_way\":1}]\"";
+       /* OperationCommand command = OperationCommand.newInstance(OperationCommand.OperationCode.CREATEFORBATCH);
+        ResponseBody<ResponseBody> resBody = OkHttpUtils.postSyncGenericNew(command,ResponseBody.class,date);
+        System.out.println(resBody);*/
+    }
+
+
+    @Test
+    public void test5(){
+        CreateForBatchParam createForBatchParam = new CreateForBatchParam();
+
+
+        CommonParam commonParam = new CommonParam();
+        commonParam.setRequestId("123");
+        commonParam.setTime(System.currentTimeMillis()/1000);
+
+        OperationCommand command = OperationCommand.newInstance(OperationCommand.OperationCode.CREATEFORBATCH,createForBatchParam);
+
+        ResponseBody<ResponseBody> resBody = OkHttpUtils.postSyncGenericNew(command, ResponseBody.class,commonParam);
+
+        System.out.println(resBody);
+    }
+
+    @Test
+    public void test6(){
+        MQGoldenOrderCenterMessage.GoldenOrderCenterMessage goldenOrderCenterMessage = MQGoldenOrderCenterMessage.GoldenOrderCenterMessage
+                .newBuilder()
+                .setOrderRandomCode("1227679550")
+                .setPayBy(12L)
+                .setBank(1)
+                .setBankcardNum("623038889000718880")
+                .setBankName("中国银行")
+                .setBankOwner("王炬")
+                .setBankNo("4402279009100102582")  //高登银行账号
+                .setBankOwner("王炬")
+                .setBankOwnerPhone("13751302397")
+                .setPayForYear(2020)
+                .setBankOwnerIdno("430422199705289854")
+                .setCertificateType(1)
+                .setSettleAmount(20.00)
+                .setPayAmount(20.00)
+                .setName("王炬")
+                .setQuarter(QuarterUtils.getQuarter(new Date()))
+                .setCertificateNum("430422199705289854")
+                .setPaymentType(1)
+                .setPaymentWay(1)
+                .setPayDate(1596181089L)
+                .setWithdrawId(2121L)
+                .setWithdrawNo("21321312")
+                .setDiscountFlag(1)
+                .setInvoiceFlag(1)
+                .setServicePointId(123L)
+                .build();
+        goldenCenterMessageSender.send(goldenOrderCenterMessage);
+    }
+
+
+}

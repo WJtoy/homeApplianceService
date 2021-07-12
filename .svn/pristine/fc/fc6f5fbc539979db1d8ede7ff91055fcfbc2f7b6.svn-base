@@ -1,0 +1,8 @@
+package com.kkl.kklplus.golden.modules.api.http.request;
+
+import lombok.Data;
+
+@Data
+public class RequestParam {
+
+}

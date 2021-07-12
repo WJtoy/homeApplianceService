@@ -1,0 +1,51 @@
+package com.kkl.kklplus.golden.utils.common;
+
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.kkl.kklplus.golden.entity.param.DataParam;
+import com.kkl.kklplus.golden.http.command.OperationCommand;
+import com.kkl.kklplus.golden.http.request.RequestParam;
+import com.kkl.kklplus.golden.utils.GsonUtils;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.ArrayList;
+
+
+@Slf4j
+public class DemoUtils {
+    private static Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+
+    public static String toDataJson(String str){
+            DataParam dataParam = new DataParam();
+            dataParam.setData(str);
+            String data =null;
+                    try{
+                    data = GsonUtils.getInstance().toGson(dataParam);
+                    }catch (Exception e){
+                       log.error("json-->{}"+e.getMessage());
+                    }
+            return data;
+        }
+
+    public static void main(String[] args) {
+        String s = DemoUtils.toDataJson("dsadasd");
+        System.out.println(s);
+    }
+
+    public static String toJsonString(OperationCommand command){
+        String requestParam = null;
+        if (command.getOpCode().code==1001) {
+            RequestParam param = command.getRequestParam();
+            ArrayList<RequestParam> listParam = new ArrayList<>();
+            listParam.add(param);
+            requestParam = gson.toJson(listParam);
+        }else{
+            RequestParam param = command.getRequestParam();
+            requestParam = gson.toJson(param);
+        }
+        return requestParam;
+    }
+
+
+}

@@ -1,0 +1,194 @@
+package com.kkl.kklplus.golden.modules.api.controller;
+
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.kkl.kklplus.golden.modules.api.entity.GoldenCallbackLog;
+import com.kkl.kklplus.golden.modules.api.entity.GoldenSettlement;
+import com.kkl.kklplus.golden.modules.api.entity.GoldenSysLog;
+import com.kkl.kklplus.golden.modules.api.entity.callback.PaymentParam;
+import com.kkl.kklplus.golden.modules.api.entity.callback.RefundParam;
+import com.kkl.kklplus.golden.modules.api.entity.callback.RequestCallbackParam;
+import com.kkl.kklplus.golden.modules.api.commonEnum.ProcessFlagEnum;
+import com.kkl.kklplus.golden.modules.api.commonEnum.SettlementEnum;
+import com.kkl.kklplus.golden.modules.api.commonEnum.CreateForBatchEnum;
+import com.kkl.kklplus.golden.modules.api.http.config.GoldenProperties;
+import com.kkl.kklplus.golden.modules.api.mapper.GoldenCallbackLogMapper;
+import com.kkl.kklplus.golden.modules.api.mapper.GoldenSettlementMapper;
+import com.kkl.kklplus.golden.modules.api.mapper.GoldenSysLogMapper;
+import com.kkl.kklplus.golden.modules.api.mq.body.MQGoldenSettlementMessage;
+import com.kkl.kklplus.golden.modules.api.mq.sender.GoldenCenterMessageSender;
+import com.kkl.kklplus.golden.modules.api.mq.sender.GoldenSettlementMessageSender;
+import com.kkl.kklplus.golden.modules.api.service.GoldenSettlementService;
+import com.kkl.kklplus.golden.modules.api.utils.AesUtil;
+import com.kkl.kklplus.golden.modules.api.utils.GsonUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+
+
+@Slf4j
+@RestController
+@RequestMapping("/api/callback/")
+public class SettlementCallbackController {
+
+
+    @Autowired
+    private GoldenSettlementMapper goldenSettlementMapper;
+
+    @Autowired
+    private GoldenCenterMessageSender goldenCenterMessageSender;
+
+    @Autowired
+    private GoldenSettlementMessageSender goldenSettlementMessageSender;
+
+    @Autowired
+    private GoldenCallbackLogMapper goldenCallbackLogMapper;
+
+    @Autowired
+    private GoldenSysLogMapper goldenSysLogMapper;
+
+    @Autowired
+    private GoldenSettlementService goldenSettlementService;
+
+    @Autowired
+    private GoldenProperties goldenProperties;
+
+
+    @PostMapping(value = "payment")
+    public String payment(@RequestBody RequestCallbackParam requestCallbackParam){
+        GoldenProperties.GoldenDataConfig goldenDataConfig = goldenProperties.getGoldenDataConfig();
+        if (requestCallbackParam.getCode() == CreateForBatchEnum.SUCCESS.getValue() ||
+                requestCallbackParam.getCode() == CreateForBatchEnum.PAID.getValue()) {
+
+            if (!requestCallbackParam.getData().isEmpty() || requestCallbackParam.getData() != null) {
+                String aesStr = AesUtil.decrypt(requestCallbackParam.getData(), goldenDataConfig.getAppSecret());
+                if (aesStr.isEmpty()){  //解密失败
+                    GoldenSysLog goldenSysLog = new GoldenSysLog();
+                    goldenSysLog.setCreateBy(1L);
+                    goldenSysLog.setTitle("解密失败");
+                    goldenSysLog.setType(1);
+                    goldenSysLog.setCreateDate(System.currentTimeMillis());
+                    goldenSysLog.setException(requestCallbackParam.getData());
+                    goldenSysLogMapper.insert(goldenSysLog);
+                    return "success";
+                }
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                gsonBuilder.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
+                Gson gson = gsonBuilder.create();
+                PaymentParam paymentParam = gson.fromJson(aesStr, PaymentParam.class);
+                if (paymentParam != null){
+                    if (paymentParam.getOrderRandomCode() != null){
+                        GoldenSettlement goldenSettlement = new GoldenSettlement();
+                        goldenSettlement.setWithdrawId(Long.valueOf(paymentParam.getOrderRandomCode()));
+                        List<GoldenSettlement> goldenSettlementList = goldenSettlementMapper.select(goldenSettlement);
+                        if(goldenSettlementList.size() == 1){
+                            GoldenSettlement goldenSettlement1 = new GoldenSettlement();
+                            goldenSettlement1.setId(goldenSettlementList.get(0).getId());
+                            goldenSettlement1.setStatus(SettlementEnum.PAY_SUCCESS.getValue());
+                            goldenSettlement1.setUpdateDate(System.currentTimeMillis());
+                            goldenSettlementMapper.update(goldenSettlement1);
+                            //发送mq
+                            MQGoldenSettlementMessage.GoldenSettlementMessage goldenSettlementMessage =
+                                    MQGoldenSettlementMessage.GoldenSettlementMessage.newBuilder()
+                                            .setRemarks("打款成功")
+                                            .setStatus(SettlementEnum.PAY_SUCCESS.getValue())
+                                            .setId(goldenSettlement.getId())
+                                            .setQuarter(goldenSettlementList.get(0).getQuarter())
+                                            .build();
+                            try {
+                                goldenSettlementMessageSender.send(goldenSettlementMessage);
+                                GoldenCallbackLog goldenCallbackLog = new GoldenCallbackLog();
+                                goldenCallbackLog.setSettlementId(goldenSettlementList.get(0).getId());
+                                GoldenCallbackLog goldenCallbackLog1 = goldenCallbackLogMapper.selectOne(goldenCallbackLog);
+                                if (goldenCallbackLog1 != null){
+                                        goldenCallbackLog.setProcessFlag(ProcessFlagEnum.SUCCESS.getValue());
+                                        goldenCallbackLog.setUpdateDate(System.currentTimeMillis());
+                                        goldenCallbackLog.setUpdateBy(1L);
+                                        goldenCallbackLogMapper.update(goldenCallbackLog);
+                                }
+
+                            }catch (Exception e){
+                                GoldenCallbackLog goldenCallbackLog = new GoldenCallbackLog();
+                                goldenCallbackLog.setSettlementId(goldenSettlementList.get(0).getId());
+                                GoldenCallbackLog goldenCallbackLog1 = goldenCallbackLogMapper.selectOne(goldenCallbackLog);
+                                if (goldenCallbackLog1 != null){
+                                    goldenCallbackLog.setProcessFlag(ProcessFlagEnum.FAIL.getValue());
+                                    goldenCallbackLog.setUpdateDate(System.currentTimeMillis());
+                                    goldenCallbackLog.setUpdateBy(1L);
+                                    goldenCallbackLogMapper.update(goldenCallbackLog);
+                                }
+                                GoldenSysLog goldenSysLog = new GoldenSysLog();
+                                goldenSysLog.setTitle("打款回调成功后发送消息队列通知失败");
+                                goldenSysLog.setCreateDate(System.currentTimeMillis());
+                                goldenSysLog.setQuarter(goldenSettlementList.get(0).getQuarter());
+                                goldenSysLog.setCreateBy(1L);
+                                goldenSysLog.setException(e.getMessage());
+                                goldenSysLog.setType(1);
+                                goldenSysLogMapper.insert(goldenSysLog);
+                            }
+                        }
+                    }
+                }
+            }
+        }else if (requestCallbackParam.getCode() == CreateForBatchEnum.PAY_FAIL.getValue()) {  //打款失败
+
+            return goldenSettlementService.goldenSettlement(requestCallbackParam,SettlementEnum.PAY_FAIL.getValue(),"打款失败");
+
+        }
+
+        log.info("回调参数------------------------");
+
+        return "success";
+    }
+
+
+    @PostMapping (value = "refund")
+    public String refund(HttpServletRequest req) throws IOException {
+        String json = readReq(req);
+        try {
+            RequestCallbackParam requestParam = GsonUtils.getInstance().fromJson(json, RequestCallbackParam.class);
+            GoldenProperties.GoldenDataConfig goldenDataConfig = goldenProperties.getGoldenDataConfig();
+            if (requestParam.getCode() == 0) {
+                String data = requestParam.getData();
+                if (StringUtils.isNotBlank(data)) {
+                    String aesStr = AesUtil.decrypt(data, goldenDataConfig.getAppSecret());
+                    RefundParam refundParam =  GsonUtils.getInstance().fromJson(aesStr, RefundParam.class);
+
+                }else{
+
+                }
+            }
+        }catch (Exception e){
+            log.error("refund:json转化异常:{}",json,e);
+        }
+        return "success";
+    }
+
+    public String readReq(HttpServletRequest req) throws IOException {
+        // 读取参数
+        InputStream inputStream;
+        StringBuffer sb = new StringBuffer();
+        inputStream = req.getInputStream();
+        String s;
+        BufferedReader in = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+        while ((s = in.readLine()) != null) {
+            sb.append(s);
+        }
+        in.close();
+        inputStream.close();
+        String json = sb.toString();
+        return json;
+    }
+}

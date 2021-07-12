@@ -1,0 +1,36 @@
+package com.kkl.kklplus.golden.modules.api.entity;
+
+import lombok.Data;
+
+@Data
+public class GoldenProcessLog {
+
+    private Long id;
+
+    private Long settlementId;
+
+    private String withdrawNo;
+
+    private String interfaceName;
+
+    private String infoJson;
+
+    private String resultJson;
+
+    private Integer processFlag;
+
+    private Integer processTime;
+
+    private String processComment;
+
+    private Long createBy;
+
+    private Long createDate;
+
+    private Long updateBy;
+
+    private Long updateDate;
+
+    private String quarter;
+
+}

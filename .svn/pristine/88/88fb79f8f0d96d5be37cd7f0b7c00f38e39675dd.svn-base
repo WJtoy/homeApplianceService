@@ -1,0 +1,18 @@
+package com.kkl.kklplus.golden.modules.api.mapper;
+
+import com.kkl.kklplus.golden.modules.api.entity.golden.GoldenSettlement;
+import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
+
+@Mapper
+public interface GoldenSettlementMapper {
+
+    List<GoldenSettlement> select(Object parameter);
+
+    Long insert(GoldenSettlement goldenSettlement);
+
+    void update(GoldenSettlement goldenSettlement);
+
+
+}

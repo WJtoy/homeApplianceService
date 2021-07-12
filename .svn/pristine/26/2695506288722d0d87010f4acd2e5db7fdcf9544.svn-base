@@ -1,0 +1,38 @@
+package com.kkl.kklplus.golden.modules.api.mq.config;
+
+
+import com.kkl.kklplus.golden.modules.api.mq.contans.MQConstant;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Queue;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+
+/**
+ * mq发送成功消息
+ * @author chenxj
+ * @date 2020/05/29
+ */
+@Configuration
+public class GoldenCenterExpressArrivalMQConfig {
+
+    @Bean
+    public Queue goldenCenterExpressArrivalQueue() {
+        return new Queue(MQConstant.MQ_TEST_EXCHANGE, true);
+    }
+
+    @Bean
+    DirectExchange goldenCenterExpressArrivalExchange() {
+        return new DirectExchange(MQConstant.MQ_TEST_EXCHANGE);
+    }
+
+    @Bean
+    Binding bindingGoldenCenterExpressArrivalMessage(Queue goldenCenterExpressArrivalQueue, DirectExchange goldenCenterExpressArrivalExchange) {
+        return BindingBuilder.bind(goldenCenterExpressArrivalQueue)
+                .to(goldenCenterExpressArrivalExchange)
+                .with(MQConstant.MQ_TEST_EXCHANGE);
+    }
+
+}

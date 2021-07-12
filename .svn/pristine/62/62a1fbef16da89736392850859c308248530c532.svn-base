@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kkl.kklplus.golden.modules.api.mapper.GoldenCallbackLogMapper">
+
+
+        <select id="select" resultType="com.kkl.kklplus.golden.modules.api.entity.golden.GoldenCallbackLog">
+            select
+            id
+            ,settlement_id
+            ,withdraw_no
+            ,interface_name
+            ,info_json
+            ,result_json
+            ,process_flag
+            ,process_time
+            ,process_comment
+            ,create_by
+            ,create_date
+            ,update_by
+            ,update_date
+            ,quarter
+            from golden_callback_log
+            <where>
+
+
+            </where>
+        </select>
+
+
+    <select id="selectOne" resultType="com.kkl.kklplus.golden.modules.api.entity.golden.GoldenCallbackLog">
+        select
+        id
+        ,settlement_id
+        ,withdraw_no
+        ,interface_name
+        ,info_json
+        ,result_json
+        ,process_flag
+        ,process_time
+        ,process_comment
+        ,create_by
+        ,create_date
+        ,update_by
+        ,update_date
+        ,quarter
+        from golden_callback_log
+        <where>
+            <if test="id != null ">
+                AND id = #{id,jdbcType=BIGINT}
+            </if>
+            <if test="settlement_id != null ">
+                AND settlement_id = #{settlementId}
+            </if>
+        </where>
+    </select>
+
+
+
+
+    <insert id="insert" parameterType="com.kkl.kklplus.golden.modules.api.entity.golden.GoldenCallbackLog">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() AS ID
+        </selectKey>
+        INSERT into golden_callback_log (
+        id
+        ,settlement_id
+        ,withdraw_no
+        ,interface_name
+        ,info_json
+        ,result_json
+        ,process_flag
+        ,process_time
+        ,process_comment
+        ,create_by
+        ,create_date
+        ,update_by
+        ,update_date
+        ,quarter
+        )values (
+        #{id}
+        ,#{settlementId}
+        ,#{withdrawNo}
+        ,#{interfaceName}
+        ,#{infoJson}
+        ,#{resultJson}
+        ,#{processFlag}
+        ,#{processTime}
+        ,#{processComment}
+        ,#{createBy}
+        ,#{createDate}
+        ,#{updateBy}
+        ,#{updateDate}
+        ,#{quarter}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.kkl.kklplus.golden.modules.api.entity.golden.GoldenCallbackLog">
+        UPDATE	golden_callback_log
+        <set>
+            <include refid="set_column" />
+        </set>
+        WHERE	ID = #{id,jdbcType=BIGINT}
+    </update>
+
+
+
+    <sql id="set_column">
+        <if test="id != null ">
+            id = #{id,jdbcType=BIGINT},
+        </if>
+        <if test="settlementId != null ">
+            settlement_id = #{settlementId,jdbcType=BIGINT},
+        </if>
+        <if test="withdrawNo != null ">
+            withdraw_no = #{withdrawNo,jdbcType=VARCHAR},
+        </if>
+        <if test="interfaceName != null ">
+            interface_name = #{interfaceName,jdbcType=VARCHAR},
+        </if>
+        <if test="infoJson != null ">
+            info_json = #{infoJson,jdbcType=VARCHAR},
+        </if>
+        <if test="resultJson != null ">
+            result_json = #{resultJson,jdbcType=VARCHAR},
+        </if>
+        <if test="processFlag != null ">
+            process_flag = #{processFlag,jdbcType=INTEGER},
+        </if>
+        <if test="processTime != null ">
+            process_time = #{processTime,jdbcType=INTEGER},
+        </if>
+        <if test="processComment != null ">
+            process_comment = #{processComment,jdbcType=VARCHAR},
+        </if>
+        <if test="createBy != null ">
+            create_by = #{createBy,jdbcType=BIGINT},
+        </if>
+        <if test="createDate != null ">
+            create_date = #{createDate,jdbcType=BIGINT},
+        </if>
+        <if test="updateBy != null ">
+            update_by = #{updateBy,jdbcType=BIGINT},
+        </if>
+        <if test="updateDate != null ">
+            update_date = #{updateDate,jdbcType=BIGINT},
+        </if>
+        <if test="quarter != null ">
+            quarter = #{quarter,jdbcType=VARCHAR},
+        </if>
+
+    </sql>
+</mapper>

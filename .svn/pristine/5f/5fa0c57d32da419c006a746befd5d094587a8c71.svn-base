@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kkl.kklplus.golden.mapper.GoldenSettlementsMapper">
+
+
+        <select id="select" resultType="com.kkl.kklplus.golden.entity.GoldenSettlements">
+            select
+            id,
+            withdraw_id,
+            withdraw_no,
+            service_point_id,
+            service_status,
+            invoice_flag,
+            discount_flag,
+            payment_type,
+            status,
+            sub_status,
+            bank,
+            bank_no,
+            bank_owner,
+            bank_owner_idno,
+            bank_owner_phone,
+            apply_amount,
+            pay_amount,
+            pay_by,
+            pay_date,
+            pay_for_year,
+            pay_for_month,
+            certificate_type,
+            bank_name,
+            payment_way,
+            payment_account,
+            alipay_accountid,
+            wx_open_id,
+            wx_appid,
+            settlement_code,
+            verification_error_code,
+            fail_reason,
+            hangup_msg,
+            refund_merchant_amount,
+            refund_service_amount,
+            change_code,
+            change_merchant_amount,
+            change_service_amount,
+            remarks,
+            process_time,
+            process_comment,
+            create_by,
+            create_date,
+            update_by,
+            update_date,
+            quarter
+            from golden_settlements
+            <where>
+                <if test=" id != null">
+                    AND id = #{id}
+                </if>
+                <if test=" withdrawId != null">
+                    AND withdraw_id = #{withdrawId}
+                </if>
+                <if test=" withdrawNo != null">
+                    AND withdraw_no = #{withdrawNo}
+                </if>
+                <if test=" quarter != null">
+                    AND quarter = #{quarter}
+                </if>
+            </where>
+
+
+        </select>
+    <select id="batchSearchSettlementsByWithdrawIds" resultType="com.kkl.kklplus.golden.entity.GoldenSettlements">
+        select
+            id,
+            withdraw_id,
+            withdraw_no,
+            status,
+            sub_status,
+            fail_reason,
+            hangup_msg,
+            process_comment
+        from golden_settlements
+        <choose>
+            <when test="withdrawIds != null and withdrawIds.size() > 0">
+                <where>
+                    <choose>
+                        <when test="withdrawIds.size() == 1">
+                            AND withdraw_id = #{withdrawIds[0]}
+                        </when>
+                        <otherwise>
+                            AND withdraw_id in
+                            <foreach collection="shopIds"  item="shop" open="(" close=")" separator=",">
+                                #{shop}
+                            </foreach>
+                        </otherwise>
+                    </choose>
+                </where>
+            </when>
+            <otherwise>
+                LIMIT 0
+            </otherwise>
+        </choose>
+    </select>
+
+
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        INSERT into golden_settlements (
+            withdraw_id,
+            withdraw_no,
+            service_point_id,
+            service_status,
+            invoice_flag,
+            discount_flag,
+            payment_type,
+            status,
+            sub_status,
+            bank,
+            bank_no,
+            bank_owner,
+            bank_owner_idno,
+            bank_owner_phone,
+            apply_amount,
+            pay_amount,
+            pay_by,
+            pay_date,
+            pay_for_year,
+            pay_for_month,
+            certificate_type,
+            bank_name,
+            payment_way,
+            payment_account,
+            alipay_accountid,
+            wx_open_id,
+            wx_appid,
+            settlement_code,
+            verification_error_code,
+            fail_reason,
+            hangup_msg,
+            refund_merchant_amount,
+            refund_service_amount,
+            change_code,
+            change_merchant_amount,
+            change_service_amount,
+            remarks,
+            process_time,
+            process_comment,
+            create_by,
+            create_date,
+            update_by,
+            update_date,
+            quarter
+        )values (
+        #{withdrawId},
+        #{withdrawNo},
+        #{servicePointId},
+        #{serviceStatus},
+        #{invoiceFlag},
+        #{discountFlag},
+        #{paymentType},
+        #{status},
+        #{subStatus},
+        #{bank},
+        #{bankNo},
+        #{bankOwner},
+        #{bankOwnerIdno},
+        #{bankOwnerPhone},
+        #{applyAmount},
+        #{payAmount},
+        #{payBy},
+        #{payDate},
+        #{payForYear},
+        #{payForMonth},
+        #{certificateType},
+        #{bankName},
+        #{paymentWay},
+        #{paymentAccount},
+        #{alipayAccountid},
+        #{wxOpenId},
+        #{wxAppid},
+        #{settlementCode},
+        #{verificationErrorCode},
+        #{failReason},
+        #{hangupMsg},
+        #{refundMerchantAmount},
+        #{refundServiceAmount},
+        #{changeCode},
+        #{changeMerchantAmount},
+        #{changeServiceAmount},
+        #{remarks},
+        #{processTime},
+        #{processComment},
+        #{createBy},
+        #{createDate},
+        #{updateBy},
+        #{updateDate},
+        #{quarter}
+        )
+    </insert>
+
+
+    <update id="update">
+        update
+        golden_settlements
+        set
+        <if test="status != null">
+        status = #{status},
+        </if>
+        <if test="subStatus != null">
+        sub_status = #{subStatus},
+        </if>
+        <if test="settlementCode != null">
+        settlement_code = #{settlementCode},
+        </if>
+        <if test="processComment != null">
+        process_comment = #{processComment},
+        </if>
+        <if test="refundMerchantAmount != null">
+        refund_merchant_amount = #{refundMerchantAmount},
+        </if>
+        <if test="refundServiceAmount != null">
+        refund_service_amount = #{refundServiceAmount},
+        </if>
+        <if test="changeCode != null">
+        change_code = #{changeCode},
+        </if>
+        <if test="changeMerchantAmount != null">
+        change_merchant_amount = #{changeMerchantAmount},
+        </if>
+        <if test="changeServiceAmount !=null ">
+        change_service_amount = #{changeServiceAmount},
+        </if>
+        <if test="processTime != null">
+        process_time = #{processTime},
+        </if>
+        <if test="updateDate != null">
+        update_date = #{updateDate},
+        </if>
+        <if test="remarks != null">
+        remarks = #{remarks}
+        </if>
+        <where>
+			id= #{id}
+        </where>
+    </update>
+    <update id="closeRefund">
+        update
+            golden_settlements
+        set
+            sub_status = 37,
+            update_date = #{updateDt},
+            update_by = #{updateById}
+        where
+            id = #{id}
+    </update>
+    <update id="updateStatusToExecute">
+        update
+            golden_settlements
+        set
+            sub_status = 15,
+            update_date = #{updateDate},
+            update_by = #{updateById}
+        where
+            id = #{id}
+            and sub_status = 18
+    </update>
+    <update id="updateReqResult">
+        update
+            golden_settements
+        set
+            update_date = #{updateDate},
+            update_by = #{updateById},
+            status = #{status},
+            <if test="processComment != null and processComment != ''">
+                process_comment = #{processComment},
+            </if>
+            sub_status = #{subStatus}
+        where
+            id = #{id}
+    </update>
+
+
+    <sql id="set_column">
+        <if test="id != null ">
+            id = #{id,jdbcType=BIGINT},
+        </if>
+
+    </sql>
+</mapper>

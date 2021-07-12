@@ -1,0 +1,95 @@
+package com.kkl.kklplus.golden.modules.api.utils.http;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+import com.kkl.kklplus.golden.modules.api.config.Constant;
+import com.kkl.kklplus.golden.modules.api.config.HeadersShare;
+import com.kkl.kklplus.golden.modules.api.entity.params.CommonParam;
+import com.kkl.kklplus.golden.modules.api.http.config.GoldenProperties;
+import com.kkl.kklplus.golden.modules.api.http.response.ResponseBody;
+import com.kkl.kklplus.golden.modules.api.utils.AesUtil;
+import com.kkl.kklplus.golden.modules.api.utils.SpringContextHolder;
+import com.kkl.kklplus.golden.modules.api.utils.StringUtil;
+import com.kkl.kklplus.golden.modules.api.utils.common.OperationCommand;
+import okhttp3.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+
+public class OkHttpUtils {
+
+    private static final MediaType CONTENT_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
+    private static OkHttpClient okHttpClient = SpringContextHolder.getBean(OkHttpClient.class);
+    private static GoldenProperties  goldenProperties = SpringContextHolder.getBean(GoldenProperties .class);
+    private static Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+
+    public static <T> ResponseBody<T> postSyncGenericNew(OperationCommand command, Class<T> dataClass, CommonParam commonParam) {
+        ResponseBody<T> responseBody = null;
+
+        if (command.getOpCode()!= null && command != null ) {
+            String data = gson.toJson(command.getRequestParam());
+            String aes = AesUtil.encrypt(data, goldenProperties.getGoldenDataConfig().getAppSecret());    //加密
+
+            System.out.println(aes+"---------------------------------------->");
+            String url = goldenProperties.getGoldenDataConfig().getRequestMainUrl().concat(command.getOpCode().apiUrl);
+            String reqbodyJson = gson.toJson(aes);
+            RequestBody requestBody = RequestBody.create(CONTENT_TYPE_JSON, reqbodyJson);
+            Map<String, String> headers = new HashMap<>();
+            headers.put("appkey",goldenProperties.getGoldenDataConfig().getAppKey());
+            headers.put("sign_type",goldenProperties.getGoldenDataConfig().getSignType());
+            headers.put("version",String.valueOf(goldenProperties.getGoldenDataConfig().getVersion()));
+            headers.put("request_id",commonParam.getRequestId());
+            headers.put("timestamp",String.valueOf(commonParam.getTime()));
+            headers.put("signature", StringUtil.HMACSHA256(
+                            goldenProperties.getGoldenDataConfig().getAppKey()
+                                    +commonParam.getTime()
+                                    +goldenProperties.getGoldenDataConfig().getAppSecret()
+                                    ,goldenProperties.getGoldenDataConfig().getAppSecret()));
+            if (!commonParam.getCallBackUrl().isEmpty()) {
+                headers.put("callback_url", StringUtil.encryptBASE64(commonParam.getCallBackUrl()).replace("\r\n",""));
+            }
+            Request.Builder requestBuilder = new Request.Builder().url(url);
+            headers.forEach((k, v) -> requestBuilder.addHeader(k, v));
+            Request request = requestBuilder.post(requestBody).build();
+
+            Call call = okHttpClient.newCall(request);
+            try {
+                Response response = call.execute();
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        String responseBodyJson = response.body().string();
+                        try {
+                            responseBody = gson.fromJson(responseBodyJson, new TypeToken<ResponseBody>(){}.getType());
+
+                            //发送消息队列
+                        } catch (Exception e) {
+                            return responseBody;
+                        }
+                    } else {
+                        responseBody = new ResponseBody<>(ResponseBody.ErrorCode.HTTP_RESPONSE_BODY_ERROR);
+                    }
+                } else {
+                    responseBody = new ResponseBody<>(ResponseBody.ErrorCode.HTTP_STATUS_CODE_ERROR);
+                }
+            } catch (Exception e) {
+                return new ResponseBody<>(ResponseBody.ErrorCode.REQUEST_INVOCATION_FAILURE, e);
+            }
+        } else {
+            responseBody = new ResponseBody<>(ResponseBody.ErrorCode.REQUEST_PARAMETER_FORMAT_ERROR);
+        }
+        return responseBody;
+    }
+
+    public static void main(String[] args) {
+        String date = "\"[{\"order_random_code\":\"3ff73660-12fd-4605-a851-2afa728f0f27\",\"name\":\"XXX\",\"certificate_type\":1,\"certificate_num\":\"XXX\",\"phone_num\":\"18888888888\",\"bank_name\":\"招商银行\",\"bankcard_num\":\"23232323232\",\"settle_amount\":1.0,\"payment_way\":1}]\"";
+
+        System.out.println();
+
+    }
+}
